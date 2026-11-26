@@ -10,6 +10,7 @@ import com.example.gestionstationskii.entities.*;
 
 import java.util.List;
 
+@CrossOrigin("*")
 @Tag(name = "\uD83D\uDC69\u200D\uD83C\uDFEB Instructor Management")
 @RestController
 @RequestMapping("/instructor")

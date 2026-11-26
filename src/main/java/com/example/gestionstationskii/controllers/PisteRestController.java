@@ -11,6 +11,7 @@ import com.example.gestionstationskii.entities.*;
 
 import java.util.List;
 
+@CrossOrigin("*")
 @Tag(name = "\uD83C\uDFBF Piste Management")
 @RestController
 @RequestMapping("/piste")

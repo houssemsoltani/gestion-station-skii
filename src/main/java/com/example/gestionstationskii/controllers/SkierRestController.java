@@ -9,6 +9,7 @@ import com.example.gestionstationskii.entities.*;
 
 import java.util.List;
 
+@CrossOrigin("*")
 @Tag(name = "\uD83C\uDFC2 Skier Management")
 @RestController
 @RequestMapping("/skier")

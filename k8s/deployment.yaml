@@ -19,7 +19,21 @@ spec:
         image: gestion-station-skii:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8080
+        - containerPort: 8087
+        livenessProbe:
+          httpGet:
+            path: /stationSki/actuator/health
+            port: 8087
+          initialDelaySeconds: 40
+          periodSeconds: 15
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /stationSki/actuator/health
+            port: 8087
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 3
         resources:
           requests:
             cpu: "500m"

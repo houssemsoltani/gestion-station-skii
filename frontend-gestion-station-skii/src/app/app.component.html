@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+  <div class="container">
+    <a class="navbar-brand fw-bold" routerLink="/">Gestion Station Ski</a>
+    <div class="collapse navbar-collapse show">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/skiers" routerLinkActive="active fw-bold">Skieurs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/courses" routerLinkActive="active fw-bold">Cours</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/pistes" routerLinkActive="active fw-bold">Pistes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/instructors" routerLinkActive="active fw-bold">Moniteurs</a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center text-white gap-2">
+        <small class="text-white-50">API :</small>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedBackend" (change)="onBackendChange()" style="width: auto;">
+          <option value="http://localhost:8087/stationSki">Localhost (8087)</option>
+          <option value="http://54.242.143.76:8087/stationSki">AWS Cloud (54.242.143.76)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <router-outlet></router-outlet>
+</div>
