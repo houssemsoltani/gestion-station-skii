@@ -1,0 +1,533 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Source de donnees Prometheus connectee a Jenkins",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Monitoring complet du pipeline CI/CD Jenkins pour le projet Spring Boot gestion-station-skii",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILED"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "SUCCESS"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_last_build_result{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Dernier Build",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_last_build_tests_total{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Tests Unitaires (Total)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_last_build_tests_failing{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Tests Echoues",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_last_build_duration_milliseconds{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Duree Dernier Build",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_available_builds_count{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Nombre de Builds",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 40 },
+              { "color": "green", "value": 80 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "id": 6,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_health_score{jenkins_job=\"gestion-station-skii\"}",
+          "refId": "A"
+        }
+      ],
+      "title": "Sante du Projet (Health Score)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20000 },
+              { "color": "red", "value": 45000 }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "id": 7,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "default_jenkins_builds_last_stage_duration_milliseconds_summary_sum{jenkins_job=\"gestion-station-skii\"}",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Duree des 12 Etapes CI/CD (gestion-station-skii)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "auto"
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "id": 8,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "vm_memory_total_used_window_1h{quantile=\"0.5\"}",
+          "legendFormat": "Memoire JVM Utilisee",
+          "refId": "A"
+        }
+      ],
+      "title": "Memoire JVM Jenkins",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "lineWidth": 2
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 13 },
+      "id": 9,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "vm_cpu_load",
+          "legendFormat": "Charge CPU Jenkins",
+          "refId": "A"
+        }
+      ],
+      "title": "Charge CPU Jenkins",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 50
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 13 },
+      "id": 10,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jenkins_executor_in_use_value",
+          "legendFormat": "Executeurs actifs",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "jenkins_executor_free_value",
+          "legendFormat": "Executeurs libres",
+          "refId": "B"
+        }
+      ],
+      "title": "Executeurs Jenkins (Actifs vs Libres)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 20 },
+      "id": 11,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum(jvm_memory_used_bytes{job=\"spring-boot-app\"})",
+          "legendFormat": "Memoire JVM Spring Boot",
+          "refId": "A"
+        }
+      ],
+      "title": "Spring Boot App - Memoire JVM Utilisee",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 20 },
+      "id": 12,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum(http_server_requests_seconds_count{job=\"spring-boot-app\"})",
+          "legendFormat": "Total Requetes HTTP",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "hikaricp_connections_active{job=\"spring-boot-app\"}",
+          "legendFormat": "Connexions MySQL Actives",
+          "refId": "B"
+        }
+      ],
+      "title": "Spring Boot App - Requetes HTTP & MySQL",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": [
+    "devops",
+    "gestion-station-skii",
+    "jenkins"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Projet DevOps - Gestion Station Skii CI/CD",
+  "uid": "gestion-station-skii-cicd",
+  "version": 1,
+  "weekStart": ""
+}
