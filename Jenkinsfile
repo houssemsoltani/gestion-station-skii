@@ -196,6 +196,7 @@ pipeline {
             script {
                 try {
                     emailext (
+                        from: "${ALERT_EMAIL}",
                         to: "${ALERT_EMAIL}",
                         subject: "SUCCES Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
                         body: """Bonjour,
@@ -215,6 +216,7 @@ URL du Build : ${env.BUILD_URL}""",
             script {
                 try {
                     emailext (
+                        from: "${ALERT_EMAIL}",
                         to: "${ALERT_EMAIL}",
                         subject: "ECHEC Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
                         body: """Alerte CI/CD !
