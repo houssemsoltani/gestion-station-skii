@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from './services/api.service';
+import { ApiService, getDefaultBackendUrl } from './services/api.service';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +10,7 @@ import { ApiService } from './services/api.service';
   templateUrl: './app.component.html'
 })
 export class AppComponent {
-  selectedBackend = 'http://localhost:8087/stationSki';
+  selectedBackend = getDefaultBackendUrl();
 
   constructor(private api: ApiService) {}
 

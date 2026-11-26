@@ -26,9 +26,27 @@ import { ApiService, Skier } from '../services/api.service';
                 <label class="form-label">Date de naissance</label>
                 <input type="date" class="form-control" [(ngModel)]="form.dateOfBirth" name="dateOfBirth" required>
               </div>
-              <div class="mb-3">
+              <div class="mb-2">
                 <label class="form-label">Ville</label>
                 <input class="form-control" [(ngModel)]="form.city" name="city" required>
+              </div>
+              <hr class="my-2">
+              <div class="fw-semibold small text-muted mb-2">Abonnement (Subscription)</div>
+              <div class="mb-2">
+                <label class="form-label">Type d'abonnement</label>
+                <select class="form-select" [(ngModel)]="form.subscription!.typeSub" name="typeSub">
+                  <option value="ANNUAL">ANNUAL</option>
+                  <option value="SEMESTRIEL">SEMESTRIEL</option>
+                  <option value="MONTHLY">MONTHLY</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">Date début</label>
+                <input type="date" class="form-control" [(ngModel)]="form.subscription!.startDate" name="startDate" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Prix abonnement</label>
+                <input type="number" class="form-control" [(ngModel)]="form.subscription!.price" name="price" required>
               </div>
               <button class="btn btn-primary w-100" type="submit">Enregistrer</button>
             </form>
@@ -50,6 +68,7 @@ import { ApiService, Skier } from '../services/api.service';
                   <th>Nom complet</th>
                   <th>Date naissance</th>
                   <th>Ville</th>
+                  <th>Abonnement</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -60,11 +79,16 @@ import { ApiService, Skier } from '../services/api.service';
                   <td>{{ s.dateOfBirth }}</td>
                   <td>{{ s.city }}</td>
                   <td>
+                    <span *ngIf="s.subscription" class="badge bg-info text-dark">
+                      {{ s.subscription.typeSub }}
+                    </span>
+                  </td>
+                  <td>
                     <button class="btn btn-sm btn-outline-danger" (click)="remove(s.numSkier!)">Supprimer</button>
                   </td>
                 </tr>
                 <tr *ngIf="skiers.length === 0">
-                  <td colspan="5" class="text-center text-muted py-4">Aucun skieur trouvé.</td>
+                  <td colspan="6" class="text-center text-muted py-4">Aucun skieur trouvé.</td>
                 </tr>
               </tbody>
             </table>
@@ -76,10 +100,24 @@ import { ApiService, Skier } from '../services/api.service';
 })
 export class SkiersComponent implements OnInit {
   skiers: Skier[] = [];
-  form: Skier = { firstName: '', lastName: '', dateOfBirth: '2000-01-01', city: '' };
+  form: Skier = this.createEmptyForm();
   message = '';
 
   constructor(private api: ApiService) {}
+
+  createEmptyForm(): Skier {
+    return {
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '2000-01-01',
+      city: '',
+      subscription: {
+        typeSub: 'ANNUAL',
+        startDate: '2026-01-01',
+        price: 300
+      }
+    };
+  }
 
   ngOnInit() {
     this.load();
@@ -96,7 +134,7 @@ export class SkiersComponent implements OnInit {
     this.api.addSkier(this.form).subscribe({
       next: () => {
         this.message = 'Skieur ajouté avec succès !';
-        this.form = { firstName: '', lastName: '', dateOfBirth: '2000-01-01', city: '' };
+        this.form = this.createEmptyForm();
         this.load();
       },
       error: () => (this.message = "Erreur lors de l'ajout.")

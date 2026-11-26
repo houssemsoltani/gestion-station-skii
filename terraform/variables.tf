@@ -15,3 +15,9 @@ variable "app_port" {
   type        = number
   default     = 8080
 }
+
+variable "frontend_bucket_name" {
+  description = "Unique S3 bucket name for Angular static website hosting"
+  type        = string
+  default     = "gestion-station-skii-frontend-728404823665"
+}

@@ -2,12 +2,21 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface Subscription {
+  numSub?: number;
+  startDate: string;
+  endDate?: string;
+  price: number;
+  typeSub: 'ANNUAL' | 'MONTHLY' | 'SEMESTRIEL';
+}
+
 export interface Skier {
   numSkier?: number;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
   city: string;
+  subscription?: Subscription;
 }
 
 export interface Course {
@@ -34,9 +43,19 @@ export interface Instructor {
   dateOfHire: string;
 }
 
+export function getDefaultBackendUrl(): string {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:8087/stationSki';
+    }
+  }
+  return 'http://54.242.143.76:8087/stationSki';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  baseUrl = 'http://localhost:8087/stationSki';
+  baseUrl = getDefaultBackendUrl();
 
   constructor(private http: HttpClient) {}
 

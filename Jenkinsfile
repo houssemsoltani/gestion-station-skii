@@ -17,12 +17,11 @@ pipeline {
         FRONTEND_IMAGE_NAME = 'gestion-station-skii-frontend'
         GIT_REPO_URL = 'https://github.com/houssemsoltani/gestion-station-skii.git'
 
-        // --- Notification Email ---
-        ALERT_EMAIL = 'soltanihoussem072@gmail.com'
-
-        // --- AWS & Terraform & K8s ---
+        // --- AWS & Terraform & K8s & S3 ---
         terraformDir = 'terraform'
         awsCredentialsId = 'aws-credentials'
+        AWS_REGION = 'us-east-1'
+        FRONTEND_S3_BUCKET = 'gestion-station-skii-frontend-728404823665'
     }
 
     stages {
@@ -90,16 +89,92 @@ pipeline {
                         dir('frontend-gestion-station-skii') {
                             bat 'docker build -t %FRONTEND_IMAGE_NAME%:latest .'
                         }
+                        // Extraction du build Angular (dist) depuis l'image Docker pour AWS S3
+                        bat '''
+                            if exist frontend-s3-dist rmdir /s /q frontend-s3-dist
+                            mkdir frontend-s3-dist
+                            docker rm -f tmp-frontend-extract 2>nul || exit 0
+                            docker create --name tmp-frontend-extract %FRONTEND_IMAGE_NAME%:latest
+                            docker cp tmp-frontend-extract:/usr/share/nginx/html/. frontend-s3-dist/
+                            docker rm -f tmp-frontend-extract
+                        '''
                     }
                 }
             }
         }
 
-        // Étape 8 : Tag & Déploiement Docker avec Auto-Healing (--restart unless-stopped)
+        // Étape 8 : Tag & Déploiement Docker Frontend/Backend avec Auto-Healing (--restart unless-stopped)
         stage('DEPLOY OUR IMAGE') {
             steps {
-                bat 'docker tag %IMAGE_NAME%:latest %IMAGE_NAME%:v1.0'
-                echo "[AUTO-HEALING] Politique Docker : --restart unless-stopped activée pour l'auto-réparation."
+                script {
+                    bat 'docker tag %IMAGE_NAME%:latest %IMAGE_NAME%:v1.0'
+                    bat '''
+                        docker rm -f frontend-station-skii 2>nul || exit 0
+                        docker run -d --name frontend-station-skii --restart unless-stopped -p 4200:80 %FRONTEND_IMAGE_NAME%:latest
+                        docker tag %FRONTEND_IMAGE_NAME%:latest houssemsoltani/%FRONTEND_IMAGE_NAME%:latest
+                    '''
+                    try {
+                        bat 'docker push houssemsoltani/%FRONTEND_IMAGE_NAME%:latest'
+                        echo "[OK] Image frontend poussee sur Docker Hub : houssemsoltani/${FRONTEND_IMAGE_NAME}:latest"
+                    } catch (Exception e) {
+                        echo "[INFO] Push Docker Hub ignore (connectez Docker dans la session Jenkins si besoin) : ${e.message}"
+                    }
+                    echo "[AUTO-HEALING] Frontend Docker actif sur http://localhost:4200 (--restart unless-stopped)."
+                }
+            }
+        }
+
+        // Étape 8b : Déploiement du Frontend Angular sur AWS S3 (Static Website Hosting)
+        stage('DEPLOY FRONTEND TO AWS S3') {
+            steps {
+                script {
+                    try {
+                        withCredentials([file(credentialsId: awsCredentialsId, variable: 'AWS_CREDENTIALS_FILE')]) {
+                            def awsCredentials = readFile(AWS_CREDENTIALS_FILE).trim().split("\n")
+                            env.AWS_ACCESS_KEY_ID = awsCredentials.find { it.startsWith("aws_access_key_id") }.split("=")[1].trim()
+                            env.AWS_SECRET_ACCESS_KEY = awsCredentials.find { it.startsWith("aws_secret_access_key") }.split("=")[1].trim()
+                            env.AWS_SESSION_TOKEN = awsCredentials.find { it.startsWith("aws_session_token") }?.split("=")[1]?.trim() ?: ''
+
+                            powershell '''
+                                $ErrorActionPreference = "Stop"
+                                $bucket = $env:FRONTEND_S3_BUCKET
+                                $region = $env:AWS_REGION
+                                $distPath = Join-Path $env:WORKSPACE "frontend-s3-dist"
+
+                                $policyJson = @"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::$bucket/*"
+    }
+  ]
+}
+"@
+                                $tmpPolicy = Join-Path $env:WORKSPACE "s3-policy-tmp"
+                                New-Item -ItemType Directory -Path $tmpPolicy -Force | Out-Null
+                                [System.IO.File]::WriteAllText((Join-Path $tmpPolicy "policy.json"), $policyJson, (New-Object System.Text.UTF8Encoding($false)))
+
+                                $dockerEnv = @("run", "--rm", "-e", "AWS_ACCESS_KEY_ID=$env:AWS_ACCESS_KEY_ID", "-e", "AWS_SECRET_ACCESS_KEY=$env:AWS_SECRET_ACCESS_KEY", "-e", "AWS_DEFAULT_REGION=$region")
+                                if ($env:AWS_SESSION_TOKEN) { $dockerEnv += @("-e", "AWS_SESSION_TOKEN=$env:AWS_SESSION_TOKEN") }
+
+                                & docker @dockerEnv amazon/aws-cli s3 mb "s3://$bucket" 2>$null | Out-Null
+                                & docker @dockerEnv amazon/aws-cli s3api put-public-access-block --bucket $bucket --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+                                & docker (@dockerEnv + @("-v", "${tmpPolicy}:/policy", "amazon/aws-cli", "s3api", "put-bucket-policy", "--bucket", $bucket, "--policy", "file:///policy/policy.json"))
+                                & docker @dockerEnv amazon/aws-cli s3 website "s3://$bucket/" --index-document index.html --error-document index.html
+                                & docker (@dockerEnv + @("-v", "${distPath}:/dist", "amazon/aws-cli", "s3", "sync", "/dist", "s3://$bucket", "--delete"))
+                                Remove-Item -Path $tmpPolicy -Recurse -Force -ErrorAction SilentlyContinue
+                            '''
+                            echo "[SUCCESS] Frontend deploye sur AWS S3 : http://${env.FRONTEND_S3_BUCKET}.s3-website-${env.AWS_REGION}.amazonaws.com"
+                        }
+                    } catch (Exception e) {
+                        echo "[WARN] Deploiement AWS S3 ignore ou echoue (${e.message}). Utilisez deploy-frontend-aws-s3.ps1 ou mettez a jour le credential '${awsCredentialsId}'."
+                    }
+                }
             }
         }
 
@@ -181,55 +256,16 @@ pipeline {
 
     }
 
-    // Chantier 2 : Archivage des logs & Notifications Email automatiques
+    // Chantier 2 : Archivage des logs & nettoyage
     post {
         always {
             script {
                 bat '''
+                    if exist frontend-s3-dist rmdir /s /q frontend-s3-dist
                     if not exist build-logs mkdir build-logs
                     echo Build #%BUILD_NUMBER% - Job: %JOB_NAME% - Date: %DATE% %TIME% > build-logs\\build-summary.log
                 '''
                 archiveArtifacts artifacts: 'build-logs/*.log, target/surefire-reports/*.xml', allowEmptyArchive: true
-            }
-        }
-        success {
-            script {
-                try {
-                    emailext (
-                        from: "${ALERT_EMAIL}",
-                        to: "${ALERT_EMAIL}",
-                        subject: "SUCCES Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
-                        body: """Bonjour,
-
-Le pipeline CI/CD '${env.JOB_NAME}' (Build #${env.BUILD_NUMBER}) s'est termine avec SUCCES !
-Toutes les 12 etapes (Tests, SonarQube, Nexus, Docker, K8s) ont reussi.
-
-URL du Build : ${env.BUILD_URL}""",
-                        attachLog: true
-                    )
-                } catch (Exception e) {
-                    echo "[INFO] Notification Email (SMTP non configure dans Jenkins) : ${e.message}"
-                }
-            }
-        }
-        failure {
-            script {
-                try {
-                    emailext (
-                        from: "${ALERT_EMAIL}",
-                        to: "${ALERT_EMAIL}",
-                        subject: "ECHEC Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}",
-                        body: """Alerte CI/CD !
-
-Le pipeline '${env.JOB_NAME}' (Build #${env.BUILD_NUMBER}) a ECHOUE.
-Veuillez consulter les logs ci-joints pour corriger l'erreur.
-
-URL du Build : ${env.BUILD_URL}""",
-                        attachLog: true
-                    )
-                } catch (Exception e) {
-                    echo "[INFO] Notification Email (SMTP non configure dans Jenkins) : ${e.message}"
-                }
             }
         }
     }
