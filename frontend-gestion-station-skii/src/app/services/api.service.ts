@@ -50,7 +50,7 @@ export function getDefaultBackendUrl(): string {
       return 'http://localhost:8087/stationSki';
     }
   }
-  return 'http://54.242.143.76:8087/stationSki';
+  return 'http://54.90.251.211:8087/stationSki';
 }
 
 @Injectable({ providedIn: 'root' })

@@ -57,7 +57,13 @@ $PolicyFile = Join-Path $TempPolicyDir "policy.json"
 [System.IO.File]::WriteAllText($PolicyFile, $policyJson, (New-Object System.Text.UTF8Encoding($false)))
 
 try {
-    & docker @AwsDockerArgs amazon/aws-cli s3 mb "s3://$BucketName" 2>$null | Out-Null
+    $ErrorActionPreference = "Continue"
+    & docker @AwsDockerArgs amazon/aws-cli s3api head-bucket --bucket $BucketName 2>$null | Out-Null
+    $bucketExists = ($LASTEXITCODE -eq 0)
+    $ErrorActionPreference = "Stop"
+    if (-not $bucketExists) {
+        & docker @AwsDockerArgs amazon/aws-cli s3 mb "s3://$BucketName"
+    }
     & docker @AwsDockerArgs amazon/aws-cli s3api put-public-access-block --bucket $BucketName --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
     $PolicyArgs = $AwsDockerArgs + @("-v", "${TempPolicyDir}:/policy", "amazon/aws-cli", "s3api", "put-bucket-policy", "--bucket", $BucketName, "--policy", "file:///policy/policy.json")
     & docker @PolicyArgs

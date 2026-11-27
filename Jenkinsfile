@@ -131,9 +131,9 @@ pipeline {
                     try {
                         withCredentials([file(credentialsId: awsCredentialsId, variable: 'AWS_CREDENTIALS_FILE')]) {
                             def awsCredentials = readFile(AWS_CREDENTIALS_FILE).trim().split("\n")
-                            env.AWS_ACCESS_KEY_ID = awsCredentials.find { it.startsWith("aws_access_key_id") }.split("=")[1].trim()
-                            env.AWS_SECRET_ACCESS_KEY = awsCredentials.find { it.startsWith("aws_secret_access_key") }.split("=")[1].trim()
-                            env.AWS_SESSION_TOKEN = awsCredentials.find { it.startsWith("aws_session_token") }?.split("=")[1]?.trim() ?: ''
+                            env.AWS_ACCESS_KEY_ID = awsCredentials.find { it.startsWith("aws_access_key_id") }.split("=", 2)[1].trim()
+                            env.AWS_SECRET_ACCESS_KEY = awsCredentials.find { it.startsWith("aws_secret_access_key") }.split("=", 2)[1].trim()
+                            env.AWS_SESSION_TOKEN = awsCredentials.find { it.startsWith("aws_session_token") }?.split("=", 2)?.getAt(1)?.trim() ?: ''
 
                             powershell '''
                                 $ErrorActionPreference = "Stop"
@@ -162,7 +162,13 @@ pipeline {
                                 $dockerEnv = @("run", "--rm", "-e", "AWS_ACCESS_KEY_ID=$env:AWS_ACCESS_KEY_ID", "-e", "AWS_SECRET_ACCESS_KEY=$env:AWS_SECRET_ACCESS_KEY", "-e", "AWS_DEFAULT_REGION=$region")
                                 if ($env:AWS_SESSION_TOKEN) { $dockerEnv += @("-e", "AWS_SESSION_TOKEN=$env:AWS_SESSION_TOKEN") }
 
-                                & docker @dockerEnv amazon/aws-cli s3 mb "s3://$bucket" 2>$null | Out-Null
+                                $ErrorActionPreference = "Continue"
+                                & docker @dockerEnv amazon/aws-cli s3api head-bucket --bucket $bucket 2>$null | Out-Null
+                                $bucketExists = ($LASTEXITCODE -eq 0)
+                                $ErrorActionPreference = "Stop"
+                                if (-not $bucketExists) {
+                                    & docker @dockerEnv amazon/aws-cli s3 mb "s3://$bucket"
+                                }
                                 & docker @dockerEnv amazon/aws-cli s3api put-public-access-block --bucket $bucket --public-access-block-configuration "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
                                 & docker (@dockerEnv + @("-v", "${tmpPolicy}:/policy", "amazon/aws-cli", "s3api", "put-bucket-policy", "--bucket", $bucket, "--policy", "file:///policy/policy.json"))
                                 & docker @dockerEnv amazon/aws-cli s3 website "s3://$bucket/" --index-document index.html --error-document index.html
@@ -185,9 +191,9 @@ pipeline {
                     try {
                         withCredentials([file(credentialsId: awsCredentialsId, variable: 'AWS_CREDENTIALS_FILE')]) {
                             def awsCredentials = readFile(AWS_CREDENTIALS_FILE).trim().split("\n")
-                            env.AWS_ACCESS_KEY_ID = awsCredentials.find { it.startsWith("aws_access_key_id") }.split("=")[1].trim()
-                            env.AWS_SECRET_ACCESS_KEY = awsCredentials.find { it.startsWith("aws_secret_access_key") }.split("=")[1].trim()
-                            env.AWS_SESSION_TOKEN = awsCredentials.find { it.startsWith("aws_session_token") }?.split("=")[1]?.trim()
+                            env.AWS_ACCESS_KEY_ID = awsCredentials.find { it.startsWith("aws_access_key_id") }.split("=", 2)[1].trim()
+                            env.AWS_SECRET_ACCESS_KEY = awsCredentials.find { it.startsWith("aws_secret_access_key") }.split("=", 2)[1].trim()
+                            env.AWS_SESSION_TOKEN = awsCredentials.find { it.startsWith("aws_session_token") }?.split("=", 2)?.getAt(1)?.trim()
                             env.AWS_SHARED_CREDENTIALS_FILE = AWS_CREDENTIALS_FILE
 
                             echo "AWS Access Key ID: ${env.AWS_ACCESS_KEY_ID}"
